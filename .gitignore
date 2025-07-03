@@ -1,2 +1,3 @@
 env.py
 docker-compose.yml
+echo "__pycache__/" >> .gitignore
