@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException, Depends, WebSocket
+from fastapi import FastAPI, HTTPException, Depends, WebSocket, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from uuid import UUID
 import asyncio
+
 import models
 import schemas
 import crud
@@ -12,6 +15,19 @@ import ws_manager
 
 app = FastAPI(title="ORo Robot Telemetry Dashboard", openapi_url="/openapi.json")
 
+# Serve static files like CSS and JS
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Template engine setup for HTML
+templates = Jinja2Templates(directory="frontend")
+
+# Show dashboard on homepage
+@app.get("/", response_class=HTMLResponse)
+async def serve_dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+# Dependency to get DB session
 def get_db():
     db = database.SessionLocal()
     try:
