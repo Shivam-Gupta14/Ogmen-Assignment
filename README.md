@@ -1,136 +1,259 @@
 ORo Robot Telemetry Dashboard
-A real-time telemetry dashboard for managing and monitoring ORo robot devices. Built with FastAPI, PostgreSQL, Docker, and a simple HTML/JS frontend.
-🧰 Prerequisites
-Docker v20.10+
-Docker Compose v2.0+
-Python 3.11 (optional for local development)
-PostgreSQL Client (psql)
-Git
-VS Code + WSL 2 (recommended on Windows)
+This project is a web-based telemetry dashboard for managing and monitoring ORo robot devices. It provides a RESTful API and WebSocket integration for real-time telemetry data, built with FastAPI, SQLAlchemy, PostgreSQL, and a simple HTML/JavaScript frontend.
+Prerequisites
+Ensure the following are installed:
 
-📁 Project Structure
-pgsql
-Copy
-Edit
+Docker: Version 20.10 or higher
+Docker Compose: Version 2.0 or higher
+Python: Version 3.11 (optional for local development without Docker)
+PostgreSQL Client: For database verification (e.g., psql)
+Git: To clone the repository
+VS Code (recommended) with WSL 2 integration for development on Windows
+
+Project Structure
 Ogmen-Assignment/
 ├── backend/
-│   ├── main.py, crud.py, database.py, models.py, schemas.py, ws_manager.py
+│   ├── crud.py
+│   ├── database.py
+│   ├── Dockerfile
+│   ├── main.py
 │   ├── migrations/
 │   │   ├── env.py
-│   │   └── versions/
-│   │       └── initial_migration.py
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   ├── versions/
+│   │   │   ├── initial_migration.py
+│   ├── models.py
+│   ├── requirements.txt
+│   ├── schemas.py
+│   ├── ws_manager.py
 ├── frontend/
-│   ├── app.js, dashboard.html, styles.css
+│   ├── app.js
+│   ├── dashboard.html
+│   ├── styles.css
 ├── docker-compose.yml
-└── README.md
-🚀 Getting Started
-1. Clone the Repo
-bash
-Copy
-Edit
+├── README.md
+
+Setup Instructions
+
+Clone the Repository
 git clone https://github.com/Shivam-Gupta14/Ogmen-Assignment.git
 cd Ogmen-Assignment
 
 
-3. Build & Run the App
-bash
-Copy
-Edit
-docker-compose up --build
-Wait for logs:
+Verify Directory StructureEnsure all files are present:
+ls
+ls backend
+ls backend/migrations
+ls backend/migrations/versions
+ls frontend
 
-Uvicorn running...
+Expected output:
+backend  docker-compose.yml  frontend  README.md
+crud.py  database.py  Dockerfile  main.py  migrations  models.py  requirements.txt  schemas.py  ws_manager.py
+env.py  versions
+initial_migration.py
+app.js  dashboard.html  styles.css
 
-PostgreSQL: ready to accept connections
 
-📦 Database Migrations
-Apply Migrations
-bash
-Copy
-Edit
-docker ps  # get API container name
-docker exec -it <api-container-name> alembic upgrade head
-Verify Tables
-bash
-Copy
-Edit
-psql -h localhost -U telemetry_user -d telemetry_db -W -p 5433 -c "\dt"
-🌐 Access the App
-Dashboard: http://localhost:8000/dashboard
+Update Imports (Fix ImportError)The main.py and crud.py files use absolute imports to align with the Docker volume mount. Verify:
+cat backend/main.py
+cat backend/crud.py
 
-API Docs: http://localhost:8000/docs
+Ensure main.py has:
+import models, schemas, crud, database, ws_manager
 
-🔧 API Examples
-Create Device
-json
-Copy
-Edit
-POST /devices/
-{
-  "device_name": "Robot1",
-  "model": "ORo1"
-}
-Push Metric
-json
-Copy
-Edit
-POST /metrics/{device_id}/data/
-{
-  "metric_name": "battery_level",
-  "value": "75"
-}
-Fetch Data
-http
-Copy
-Edit
-GET /metrics/{device_id}/data/
-Send Command
-json
-Copy
-Edit
-POST /commands/{device_id}/
-{
-  "command": "dispense_treat"
-}
-🛑 Stop Containers
-bash
-Copy
-Edit
-docker-compose down
-🛠️ Troubleshooting
-Port Conflicts
-bash
-Copy
-Edit
-sudo lsof -i :8000
-sudo kill <PID>
-Alembic Import Errors
-Ensure main.py and crud.py use:
-
-python
-Copy
-Edit
+And crud.py has:
 import models, schemas
-Logs
-bash
-Copy
-Edit
-docker logs assignmet-api-1
-docker logs assignmet-postgres-1
-🤝 Contributing
-Fork this repo
 
-Create your branch git checkout -b feature-name
+If incorrect, update:
+nano backend/main.py
+nano backend/crud.py
 
-Commit & push
+Replace from . import ... with import ... as shown above.
 
-Open a pull request
+Verify Dockerfile
+cat backend/Dockerfile
 
-📫 Contact
-Shivam Gupta
+Expected:
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
-GitHub: Shivam-Gupta14
+If incorrect, update:
+nano backend/Dockerfile
 
-LinkedIn: linkedin.com/in/shivam-gupta-582221291
+
+Verify docker-compose.yml
+cat docker-compose.yml
+
+Expected:
+name: assignmet
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_started
+    environment:
+      - DATABASE_URL=postgresql://telemetry_user:password@postgres:5432/telemetry_db
+    networks:
+      - app-network
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/frontend
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=telemetry_user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=telemetry_db
+    networks:
+      - app-network
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  postgres_data:
+
+If incorrect, update:
+nano docker-compose.yml
+
+
+
+Migration Instructions
+
+Build and Start Containers
+docker-compose up --build
+
+Wait for:
+
+PostgreSQL: “database system is ready to accept connections”
+Uvicorn: “Application startup complete”
+
+
+Check Running Containers
+docker ps
+
+Expected:
+CONTAINER ID   IMAGE               COMMAND                  CREATED         STATUS         PORTS                    NAMES
+<container_id> assignmet-api        "uvicorn main:app --…"   1 minute ago    Up 1 minute    0.0.0.0:8000->8000/tcp   assignmet_api_1
+<container_id> postgres:15         "docker-entrypoint.s…"   1 minute ago    Up 1 minute    0.0.0.0:5433->5432/tcp   assignmet_postgres_1
+
+Note the <api-container-name> (e.g., assignmet_api_1).
+
+Apply MigrationsIn a new terminal:
+cd /mnt/c/Users/Shivam/Desktop/Assignmet
+docker ps
+docker exec -it <api-container-name> alembic upgrade head
+
+Expected:
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> <migration_id>, initial_migration
+
+
+Verify Database Schema
+psql -h localhost -U telemetry_user -d telemetry_db -W -p 5433 -c "\dt"
+
+Enter password: passwordExpected:
+List of relations
+ Schema |     Name         | Type  |    Owner    
+--------+------------------+-------+-------------
+ public | command_logs     | table | telemetry_user
+ public | robot_devices    | table | telemetry_user
+ public | telemetry_data   | table | telemetry_user
+ public | telemetry_metrics | table | telemetry_user
+
+
+
+Run Instructions
+
+Access the Application
+
+Dashboard: Open http://localhost:8000/dashboard in a browser.
+Select a device (after creating one via API).
+View telemetry, summaries, and command logs.
+Test commands (“Dispense Treat”, “Go to Location”).
+
+
+API Documentation: Open http://localhost:8000/docs.
+POST /devices/ (e.g., {"device_name": "Robot1", "model": "ORo1"}).
+POST /metrics/{device_id}/data/ (e.g., {"metric_name": "battery_level", "value": "75"}).
+GET /metrics/{device_id}/data/.
+POST /commands/{device_id}/ (e.g., {"command": "dispense_treat"}).
+
+
+
+
+Verify Data in Database
+psql -h localhost -U telemetry_user -d telemetry_db -W -p 5433 -c "SELECT * FROM robot_devices;"
+psql -h localhost -U telemetry_user -d telemetry_db -W -p 5433 -c "SELECT * FROM telemetry_metrics;"
+
+
+Stop Containers
+docker-compose down
+
+
+
+Troubleshooting
+
+ImportError: attempted relative import with no known parent package
+
+Ensure main.py and crud.py use absolute imports (import models, schemas).
+
+Check container files:
+docker run -it assignmet-api ls /app
+
+Expected: crud.py database.py main.py migrations models.py requirements.txt schemas.py ws_manager.py
+
+
+
+Docker Compose Errors
+
+Check logs:
+docker logs assignmet_api_1
+docker logs assignmet_postgres_1
+
+
+
+
+Port Conflicts
+
+Check and resolve:
+sudo lsof -i :5433
+sudo lsof -i :8000
+sudo kill <pid>
+
+
+
+
+Frontend Issues
+
+Verify frontend files:
+cat frontend/app.js
+cat frontend/styles.css
+
+
+Test: http://localhost:8000/static/app.js
+
+
+Contributing
+
+Fork the repository.
+Create a feature branch: git checkout -b feature-name
+Commit changes: git commit -m "Add feature-name"
+Push to the branch: git push origin feature-name
+Create a pull request.
+
+Contact
+For issues or contributions, contact Shivam Gupta via GitHub: Shivam-Gupta14 or LinkedIn www.linkedin.com/in/shivam-gupta-582221291
