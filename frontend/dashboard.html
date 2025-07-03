@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORo Robot Telemetry Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ORo Robot Telemetry Dashboard</h1>
+        <div>
+            <h2>Devices</h2>
+            <select id="deviceSelect" onchange="loadDeviceData()">
+                <option value="">Select a device</option>
+            </select>
+            <button onclick="sendCommand('dispense_treat')">Dispense Treat</button>
+            <button onclick="sendCommand('go_to_location')">Go to Location</button>
+        </div>
+        <div id="latestData">
+            <h2>Latest Telemetry</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="latestDataBody"></tbody>
+            </table>
+        </div>
+        <div id="summaryData">
+            <h2>Metric Summary</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Average</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Latest</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryDataBody"></tbody>
+            </table>
+        </div>
+        <div id="commandLogs">
+            <h2>Last 5 Commands</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="commandLogsBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="/static/app.js"></script>
+</body>
+</html>
